@@ -1,77 +1,96 @@
-# MediaVault - Armazenamento de Fotos e Vídeos
+# BrownBox - Sistema de Armazenamento de Arquivos
 
-Este é um site para armazenamento e gerenciamento de fotos e vídeos, com limite total de 900GB e tamanho máximo de upload de 3GB por arquivo.
+Um sistema completo para armazenamento e gerenciamento de arquivos (imagens, vídeos e PDFs), com interface de usuário moderna e tema marrom.
 
-## Funcionalidades
+## Características
 
-- Upload de arquivos por drag-and-drop ou seleção
-- Limite de 3GB por arquivo
-- Capacidade total de armazenamento de 900GB
-- Visualização de galeria com filtros (fotos/vídeos)
-- Visualização detalhada de arquivos em modal
-- Download de arquivos
-- Exclusão de arquivos
-- Estatísticas de armazenamento
+- Interface com tema marrom, intuitiva e responsiva
+- Upload de arquivos (imagens, vídeos e PDFs)
+- Visualização integrada de arquivos diretamente no navegador
+- Limite de 999 GB de armazenamento por usuário
+- Limite de 29 GB por arquivo enviado
+- Filtragem e busca de arquivos
+- Estatísticas de uso de armazenamento
+- Banco de dados SQLite para metadados
 
-## Tecnologias Utilizadas
+## Requisitos do Sistema
 
-- HTML5
-- CSS3
-- JavaScript (Vanilla)
-- FontAwesome para ícones
+- PHP 8.0 ou superior
+- Extensão SQLite para PHP
+- XAMPP, WAMP, MAMP ou servidor web similar
+- Navegador web moderno
 
-## Funcionamento
+## Instalação
 
-Este projeto é uma demonstração front-end que simula o armazenamento de arquivos. Na implementação atual:
+1. Clone ou baixe este repositório para o diretório de seu servidor web local (ex: `htdocs` para XAMPP)
 
-1. Os arquivos são armazenados temporariamente no navegador usando o localStorage
-2. O upload é simulado com uma barra de progresso
-3. Os arquivos permanecem disponíveis entre sessões graças ao localStorage
+2. Certifique-se de que o PHP tenha permissão de escrita nos diretórios:
+   - `database/`
+   - `uploads/`
 
-Em um ambiente de produção real, seria necessário:
+3. Configure o PHP para permitir uploads grandes. No arquivo `php.ini`:
+   ```ini
+   upload_max_filesize = 29G
+   post_max_size = 29G
+   max_execution_time = 3600
+   memory_limit = 1G
+   ```
 
-1. Implementar um servidor backend (Node.js, PHP, etc.)
-2. Configurar armazenamento em disco ou serviço de nuvem
-3. Implementar autenticação de usuários
-4. Adicionar validações de segurança
+4. Acesse o sistema pelo navegador:
+   ```
+   http://localhost/[pasta-do-projeto]/
+   ```
+
+5. Na primeira execução, o sistema inicializará automaticamente o banco de dados SQLite com um usuário de teste:
+   - Usuário: demo
+   - Senha: demo123
 
 ## Estrutura do Projeto
 
 ```
 /
-├── index.html          # Página principal
+├── index.html                # Interface principal do usuário
 ├── css/
-│   └── styles.css      # Estilos CSS
+│   └── styles.css            # Estilos CSS com tema marrom
 ├── js/
-│   └── script.js       # Funcionalidades JavaScript
-└── uploads/            # Pasta para armazenar uploads (em produção)
+│   └── script.js             # Códigos JavaScript
+├── database/
+│   └── init.php              # Inicialização do banco SQLite
+│   └── storage.db            # Arquivo de banco de dados (criado automaticamente)
+├── uploads/                  # Diretório para armazenamento dos arquivos
+├── api.php                   # API para listar e gerenciar arquivos
+├── upload.php                # Processador de uploads
+└── view.php                  # Visualizador de arquivos
 ```
 
-## Como Usar
+## Uso
 
-1. Abra o arquivo `index.html` em um navegador moderno
-2. Arraste e solte arquivos de imagem ou vídeo na área de upload
-3. Clique no botão "Iniciar Upload" para processar os arquivos
-4. Visualize seus arquivos na seção de galeria
-5. Clique em um arquivo para ver detalhes, fazer download ou excluir
+1. Acesse a página inicial para visualizar os arquivos já enviados
+2. Use o botão "Upload" para enviar novos arquivos
+3. Filtre arquivos por tipo (imagens, vídeos, PDFs)
+4. Use a busca para encontrar arquivos pelo nome
+5. Clique em um arquivo para visualizá-lo, baixá-lo ou excluí-lo
+6. Verifique estatísticas de uso na seção "Estatísticas"
 
-## Limitações da Versão Demo
+## Considerações de Segurança
 
-- Os arquivos são armazenados apenas no navegador
-- Os URLs dos arquivos são temporários e expiram quando o navegador é fechado
-- O armazenamento real é limitado pelo localStorage do navegador (geralmente 5-10MB)
+Este é um projeto de demonstração e não deve ser usado em produção sem revisão adicional:
 
-## Próximos Passos
+1. Implemente autenticação adequada para usuários
+2. Adicione validação de arquivos mais rigorosa
+3. Implemente controle de acesso a arquivos
+4. Configure limites adequados de uploads no servidor
 
-Para transformar este projeto em um aplicativo completo, seria necessário:
+## Ajustes para Produção
 
-1. Desenvolver um backend com autenticação
-2. Implementar upload real de arquivos para servidor
-3. Configurar banco de dados para metadados
-4. Adicionar sistema de usuários com contas individuais
-5. Implementar camada de segurança para acesso aos arquivos
-6. Adicionar funcionalidades como compartilhamento e álbuns
+Para um ambiente de produção, considere:
+
+1. Migrar para um banco de dados mais robusto (MySQL, PostgreSQL)
+2. Implementar armazenamento em nuvem para arquivos grandes
+3. Adicionar compressão de imagens e vídeos
+4. Implementar processamento assíncrono para uploads grandes
+5. Adicionar backup automático de dados
 
 ## Licença
 
-Este projeto é apenas para fins educacionais e demonstrativos. 
+Este projeto é fornecido apenas para fins educacionais e de demonstração.

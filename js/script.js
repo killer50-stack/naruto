@@ -1,12 +1,18 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Variáveis globais
-    const MAX_STORAGE_GB = 900; // Limite máximo de armazenamento em GB
-    const MAX_FILE_SIZE_GB = 3; // Tamanho máximo de arquivo em GB
+    // Constantes
+    const MAX_STORAGE_GB = 999; // Limite máximo de armazenamento em GB
+    const MAX_FILE_SIZE_GB = 29; // Tamanho máximo de arquivo em GB
     const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_GB * 1024 * 1024 * 1024;
-    let selectedFiles = []; // Array para armazenar arquivos selecionados
-    let totalStorageUsed = 0; // Armazenamento total usado em bytes
-    let mediaItems = []; // Array para armazenar itens da mídia
-
+    
+    // Variáveis de estado
+    let selectedFiles = []; // Array para armazenar arquivos selecionados para upload
+    let userFiles = []; // Array para armazenar arquivos do usuário
+    let totalStorageUsed = 0; // Total de armazenamento usado em bytes
+    let currentFilter = 'all'; // Filtro atual da galeria
+    let currentPage = 1; // Página atual da galeria
+    let itemsPerPage = 12; // Itens por página
+    let searchTerm = ''; // Termo de busca
+    
     // Elementos DOM
     const dropArea = document.getElementById('drop-area');
     const fileInput = document.getElementById('file-input');
@@ -17,76 +23,97 @@ document.addEventListener('DOMContentLoaded', function() {
     const progressBar = document.getElementById('progress-bar');
     const progressText = document.getElementById('progress-text');
     const uploadPreview = document.getElementById('upload-preview');
-    const galleryContainer = document.getElementById('gallery-container');
+    const filesContainer = document.getElementById('files-container');
     const filterBtns = document.querySelectorAll('.filter-btn');
+    const searchInput = document.getElementById('search-input');
+    const searchBtn = document.getElementById('search-btn');
+    const paginationContainer = document.getElementById('pagination');
     const storageBar = document.getElementById('storage-bar');
     const usedStorageElem = document.getElementById('used-storage');
     const availableStorageElem = document.getElementById('available-storage');
     const totalFilesElem = document.getElementById('total-files');
     const totalImagesElem = document.getElementById('total-images');
     const totalVideosElem = document.getElementById('total-videos');
+    const totalPdfsElem = document.getElementById('total-pdfs');
     const avgSizeElem = document.getElementById('avg-size');
     const storageUsedHeader = document.getElementById('storage-used');
-    const mediaModal = document.getElementById('media-modal');
+    const fileModal = document.getElementById('file-modal');
     const closeModal = document.querySelector('.close-modal');
-    const modalMediaContainer = document.getElementById('modal-media-container');
-    const mediaTitle = document.getElementById('media-title');
-    const mediaSize = document.getElementById('media-size');
-    const mediaDate = document.getElementById('media-date');
+    const modalFileContainer = document.getElementById('modal-file-container');
+    const fileTitle = document.getElementById('file-title');
+    const fileSize = document.getElementById('file-size');
+    const fileDate = document.getElementById('file-date');
     const downloadBtn = document.getElementById('download-btn');
     const deleteBtn = document.getElementById('delete-btn');
     const uploadBtnHero = document.getElementById('upload-btn');
-
-    // Funções de inicialização
+    
+    // Inicialização
     initEventListeners();
-    loadExistingMedia();
+    loadUserFiles();
     updateStorageStats();
-
+    
+    // Configurar event listeners
     function initEventListeners() {
         // Event listeners para upload de arquivos
         dropArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             dropArea.classList.add('highlight');
         });
-
+        
         dropArea.addEventListener('dragleave', () => {
             dropArea.classList.remove('highlight');
         });
-
+        
         dropArea.addEventListener('drop', handleFileDrop);
         dropArea.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', handleFileSelect);
         uploadBtn.addEventListener('click', handleUpload);
         uploadBtnHero.addEventListener('click', scrollToUpload);
-
-        // Event listeners para filtros de galeria
+        
+        // Event listeners para filtros e pesquisa
         filterBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 filterBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                filterGallery(btn.getAttribute('data-filter'));
+                currentFilter = btn.getAttribute('data-filter');
+                currentPage = 1;
+                renderFiles();
             });
         });
-
-        // Event listeners para modal
-        closeModal.addEventListener('click', () => {
-            mediaModal.style.display = 'none';
-        });
-
-        window.addEventListener('click', (e) => {
-            if (e.target === mediaModal) {
-                mediaModal.style.display = 'none';
+        
+        searchInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                searchFiles();
             }
         });
-
-        deleteBtn.addEventListener('click', deleteSelectedMedia);
-        downloadBtn.addEventListener('click', downloadSelectedMedia);
+        
+        searchBtn.addEventListener('click', searchFiles);
+        
+        // Event listeners para modal
+        closeModal.addEventListener('click', () => {
+            fileModal.style.display = 'none';
+        });
+        
+        window.addEventListener('click', (e) => {
+            if (e.target === fileModal) {
+                fileModal.style.display = 'none';
+            }
+        });
+        
+        deleteBtn.addEventListener('click', deleteSelectedFile);
+        downloadBtn.addEventListener('click', downloadSelectedFile);
     }
-
+    
+    function searchFiles() {
+        searchTerm = searchInput.value.toLowerCase().trim();
+        currentPage = 1;
+        renderFiles();
+    }
+    
     function scrollToUpload() {
         document.getElementById('upload').scrollIntoView({ behavior: 'smooth' });
     }
-
+    
     function handleFileDrop(e) {
         e.preventDefault();
         dropArea.classList.remove('highlight');
@@ -95,47 +122,69 @@ document.addEventListener('DOMContentLoaded', function() {
             processFiles(e.dataTransfer.files);
         }
     }
-
+    
     function handleFileSelect(e) {
         processFiles(e.target.files);
     }
-
+    
     function processFiles(fileList) {
         for (let file of fileList) {
-            // Verificar se o arquivo é mídia (imagem ou vídeo)
-            if (!file.type.match('image.*') && !file.type.match('video.*')) {
-                showNotification('Somente arquivos de imagem e vídeo são permitidos.', 'error');
+            // Verificar tipo de arquivo (imagem, vídeo ou PDF)
+            if (!file.type.match('image.*') && 
+                !file.type.match('video.*') && 
+                file.type !== 'application/pdf') {
+                showNotification('Somente imagens, vídeos e PDFs são permitidos.', 'error');
                 continue;
             }
-
-            // Verificar tamanho do arquivo
+            
+            // Verificar tamanho máximo
             if (file.size > MAX_FILE_SIZE_BYTES) {
                 showNotification(`O arquivo ${file.name} excede o limite de ${MAX_FILE_SIZE_GB}GB.`, 'error');
                 continue;
             }
-
-            // Verificar se o arquivo já foi selecionado
+            
+            // Verificar duplicatas
             if (selectedFiles.some(f => f.name === file.name && f.size === file.size)) {
                 showNotification(`O arquivo ${file.name} já foi selecionado.`, 'info');
                 continue;
             }
-
+            
             // Adicionar arquivo à lista
             selectedFiles.push(file);
             addFileToList(file);
             addFilePreview(file);
         }
-
+        
         updateTotalSize();
         checkUploadButton();
     }
-
+    
+    function getFileType(file) {
+        if (file.type.startsWith('image/')) {
+            return 'image';
+        } else if (file.type.startsWith('video/')) {
+            return 'video';
+        } else if (file.type === 'application/pdf') {
+            return 'pdf';
+        }
+        return 'unknown';
+    }
+    
+    function getFileIcon(fileType) {
+        switch(fileType) {
+            case 'image': return 'fa-image';
+            case 'video': return 'fa-video';
+            case 'pdf': return 'fa-file-pdf';
+            default: return 'fa-file';
+        }
+    }
+    
     function addFileToList(file) {
         const listItem = document.createElement('li');
-        const fileType = file.type.startsWith('image/') ? 'image' : 'video';
-        const fileIcon = fileType === 'image' ? 'fa-image' : 'fa-video';
+        const fileType = getFileType(file);
+        const fileIcon = getFileIcon(fileType);
         const fileSize = formatFileSize(file.size);
-
+        
         listItem.innerHTML = `
             <div class="file-info">
                 <div class="file-icon">
@@ -150,418 +199,477 @@ document.addEventListener('DOMContentLoaded', function() {
                 <i class="fas fa-times"></i>
             </button>
         `;
-
-        // Adicionar event listener para remover arquivo
+        
         listItem.querySelector('.remove-file').addEventListener('click', function() {
             const index = parseInt(this.getAttribute('data-index'));
             removeFile(index);
         });
-
+        
         fileList.appendChild(listItem);
     }
-
+    
     function addFilePreview(file) {
         const reader = new FileReader();
         const previewItem = document.createElement('div');
         previewItem.className = 'preview-item';
-
-        reader.onload = function(e) {
-            if (file.type.startsWith('image/')) {
+        const fileType = getFileType(file);
+        
+        if (fileType === 'image') {
+            reader.onload = function(e) {
                 const img = document.createElement('img');
                 img.src = e.target.result;
                 previewItem.appendChild(img);
-            } else if (file.type.startsWith('video/')) {
+            };
+            reader.readAsDataURL(file);
+        } else if (fileType === 'video') {
+            reader.onload = function(e) {
                 const video = document.createElement('video');
                 video.src = e.target.result;
                 video.setAttribute('controls', 'true');
                 video.setAttribute('muted', 'true');
                 video.setAttribute('playsinline', 'true');
-                previewItem.appendChild(video);
                 
-                // Mostrar uma thumb do vídeo
+                // Mostrar thumb do vídeo
                 video.addEventListener('loadeddata', function() {
                     video.currentTime = 1;
                 });
                 
-                video.addEventListener('seeked', function() {
-                    // Não reproduzir automaticamente, apenas mostrar o frame
-                });
-            }
-        };
-
-        reader.readAsDataURL(file);
+                previewItem.appendChild(video);
+            };
+            reader.readAsDataURL(file);
+        } else if (fileType === 'pdf') {
+            // Para PDF, mostrar ícone em vez de prévia
+            const pdfIcon = document.createElement('div');
+            pdfIcon.innerHTML = '<i class="fas fa-file-pdf"></i><span>PDF</span>';
+            pdfIcon.className = 'pdf-preview';
+            pdfIcon.style.backgroundColor = 'var(--primary-light)';
+            pdfIcon.style.color = 'white';
+            pdfIcon.style.display = 'flex';
+            pdfIcon.style.flexDirection = 'column';
+            pdfIcon.style.alignItems = 'center';
+            pdfIcon.style.justifyContent = 'center';
+            pdfIcon.style.height = '100%';
+            pdfIcon.style.width = '100%';
+            pdfIcon.querySelector('i').style.fontSize = '36px';
+            pdfIcon.querySelector('span').style.marginTop = '5px';
+            
+            previewItem.appendChild(pdfIcon);
+        }
+        
         uploadPreview.appendChild(previewItem);
     }
-
+    
     function removeFile(index) {
         selectedFiles.splice(index, 1);
         updateFileList();
         updateTotalSize();
         checkUploadButton();
     }
-
+    
     function updateFileList() {
-        // Limpar lista e preview
         fileList.innerHTML = '';
         uploadPreview.innerHTML = '';
-
-        // Readicionar arquivos à lista
+        
         selectedFiles.forEach((file, index) => {
-            const listItem = document.createElement('li');
-            const fileType = file.type.startsWith('image/') ? 'image' : 'video';
-            const fileIcon = fileType === 'image' ? 'fa-image' : 'fa-video';
-            const fileSize = formatFileSize(file.size);
-
-            listItem.innerHTML = `
-                <div class="file-info">
-                    <div class="file-icon">
-                        <i class="fas ${fileIcon}"></i>
-                    </div>
-                    <div class="file-details">
-                        <h4>${file.name}</h4>
-                        <p>${fileSize}</p>
-                    </div>
-                </div>
-                <button class="remove-file" data-index="${index}">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-
-            listItem.querySelector('.remove-file').addEventListener('click', function() {
-                const idx = parseInt(this.getAttribute('data-index'));
-                removeFile(idx);
-            });
-
-            fileList.appendChild(listItem);
+            addFileToList(file);
             addFilePreview(file);
         });
     }
-
+    
     function updateTotalSize() {
-        let totalSize = 0;
-        selectedFiles.forEach(file => {
-            totalSize += file.size;
-        });
-        
+        const totalSize = selectedFiles.reduce((sum, file) => sum + file.size, 0);
         totalSizeElem.textContent = formatFileSize(totalSize);
     }
-
+    
     function checkUploadButton() {
-        // Calcular espaço total que seria usado após o upload
-        const potentialTotalSize = calculateTotalStorageUsed() + selectedFiles.reduce((total, file) => total + file.size, 0);
+        // Verificar espaço disponível
+        const pendingUploadSize = selectedFiles.reduce((sum, file) => sum + file.size, 0);
+        const totalPotentialSize = totalStorageUsed + pendingUploadSize;
         const maxStorageBytes = MAX_STORAGE_GB * 1024 * 1024 * 1024;
-
+        
         // Habilitar botão se houver arquivos selecionados e espaço suficiente
-        uploadBtn.disabled = selectedFiles.length === 0 || potentialTotalSize > maxStorageBytes;
-
-        // Mostrar aviso se não houver espaço suficiente
-        if (potentialTotalSize > maxStorageBytes) {
-            showNotification('Espaço de armazenamento insuficiente para completar o upload.', 'error');
+        uploadBtn.disabled = selectedFiles.length === 0 || totalPotentialSize > maxStorageBytes;
+        
+        if (pendingUploadSize > 0 && totalPotentialSize > maxStorageBytes) {
+            showNotification('Espaço de armazenamento insuficiente.', 'error');
         }
     }
-
+    
     function handleUpload() {
         if (selectedFiles.length === 0) return;
-
-        // Mostrar container de progresso
-        progressContainer.classList.remove('hidden');
         
-        // Desabilitar botão de upload durante o processo
+        // Mostrar progresso
+        progressContainer.classList.remove('hidden');
         uploadBtn.disabled = true;
-
-        // Simular upload com progresso
+        
+        // Simular upload com backend
+        simulateFileUpload();
+    }
+    
+    function simulateFileUpload() {
         let progress = 0;
         const totalFiles = selectedFiles.length;
         let filesUploaded = 0;
-
+        
         const uploadInterval = setInterval(() => {
             progress += 1;
             progressBar.style.width = `${progress}%`;
             progressText.textContent = `${progress}%`;
-
+            
             if (progress >= 100) {
                 filesUploaded++;
                 
-                // Se todos os arquivos foram "enviados"
                 if (filesUploaded === totalFiles) {
                     clearInterval(uploadInterval);
-                    completeUpload();
+                    finishUpload();
                 } else {
-                    // Resetar para próximo arquivo
                     progress = 0;
                 }
             }
-        }, 50); // Ajustar velocidade de simulação conforme necessário
+        }, 50);
     }
-
-    function completeUpload() {
-        // Processar arquivos enviados
-        selectedFiles.forEach(file => {
-            // Em uma aplicação real, aqui você salvaria os arquivos no servidor
-            // e receberia URLs ou IDs como resposta
-            
-            // Simular upload bem-sucedido
-            const fileId = 'file_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    
+    function finishUpload() {
+        // Processar cada arquivo do upload
+        const uploadedFiles = selectedFiles.map(file => {
+            const fileId = generateUniqueId();
             const fileUrl = URL.createObjectURL(file);
             
-            // Criar objeto de mídia
-            const mediaItem = {
+            // Em um app real, aqui seria feito o upload para o servidor
+            const fileObj = {
                 id: fileId,
                 name: file.name,
-                type: file.type.startsWith('image/') ? 'image' : 'video',
+                type: getFileType(file),
+                mimeType: file.type,
                 size: file.size,
-                url: fileUrl, // Em uma aplicação real, seria a URL do servidor
-                date: new Date().toISOString()
+                url: fileUrl,
+                path: `/uploads/${fileId}_${file.name}`, // Simulação de caminho no servidor
+                dateUploaded: new Date().toISOString()
             };
             
-            // Adicionar à lista de mídia
-            mediaItems.push(mediaItem);
-            
-            // Salvar no armazenamento local (simulação)
-            saveMediaToStorage();
+            return fileObj;
         });
-
-        // Atualizar galeria e estatísticas
-        renderGallery();
+        
+        // Adicionar à lista de arquivos e salvar
+        userFiles = [...userFiles, ...uploadedFiles];
+        saveUserFiles();
+        
+        // Atualizar interface
+        renderFiles();
         updateStorageStats();
         
-        // Resetar interface de upload
+        // Limpar seleção
         selectedFiles = [];
         fileList.innerHTML = '';
         uploadPreview.innerHTML = '';
         totalSizeElem.textContent = '0 MB';
+        
+        // Esconder progresso
         progressContainer.classList.add('hidden');
         progressBar.style.width = '0%';
         progressText.textContent = '0%';
-        
-        // Re-habilitar botão de upload
         uploadBtn.disabled = true;
         
-        // Mostrar notificação de sucesso
+        // Notificação e navegação
         showNotification('Upload concluído com sucesso!', 'success');
-        
-        // Rolar para a galeria
-        document.getElementById('galeria').scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('files').scrollIntoView({ behavior: 'smooth' });
     }
-
-    function loadExistingMedia() {
-        // Em uma aplicação real, isso faria uma requisição ao servidor
-        // Para esta demo, usaremos localStorage
-        const savedMedia = localStorage.getItem('mediaItems');
-        if (savedMedia) {
-            mediaItems = JSON.parse(savedMedia);
-            renderGallery();
+    
+    function generateUniqueId() {
+        return 'file_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+    }
+    
+    function loadUserFiles() {
+        // Em um app real, isso seria uma chamada AJAX para o backend
+        const savedFiles = localStorage.getItem('userFiles');
+        if (savedFiles) {
+            userFiles = JSON.parse(savedFiles);
+            renderFiles();
+        } else {
+            // Inicializar como array vazio
+            userFiles = [];
         }
     }
-
-    function saveMediaToStorage() {
-        // Em uma aplicação real, isso salvaria no servidor
-        localStorage.setItem('mediaItems', JSON.stringify(mediaItems));
+    
+    function saveUserFiles() {
+        // Em um app real, isso seria uma chamada AJAX para o backend
+        localStorage.setItem('userFiles', JSON.stringify(userFiles));
     }
-
-    function renderGallery(filter = 'all') {
-        galleryContainer.innerHTML = '';
+    
+    function renderFiles() {
+        filesContainer.innerHTML = '';
         
-        const filteredItems = filter === 'all' 
-            ? mediaItems 
-            : mediaItems.filter(item => item.type === filter);
+        // Aplicar filtro e pesquisa
+        let filteredFiles = userFiles;
         
-        filteredItems.forEach(item => {
-            const galleryItem = document.createElement('div');
-            galleryItem.className = 'gallery-item';
-            galleryItem.setAttribute('data-id', item.id);
-            
-            const mediaContainer = document.createElement('div');
-            mediaContainer.className = 'gallery-item-media';
-            
-            if (item.type === 'image') {
-                const img = document.createElement('img');
-                img.src = item.url;
-                img.alt = item.name;
-                mediaContainer.appendChild(img);
-                
-                // Adicionar evento de clique para abrir o modal apenas nas imagens
-                img.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    openMediaModal(item);
-                });
-            } else {
-                const video = document.createElement('video');
-                video.src = item.url;
-                video.setAttribute('controls', 'true');
-                video.setAttribute('muted', 'true');
-                video.setAttribute('playsinline', 'true');
-                // Mostrar o primeiro frame
-                video.addEventListener('loadeddata', () => {
-                    video.currentTime = 1;
-                });
-                mediaContainer.appendChild(video);
-                
-                // Prevenir que o clique no vídeo propague para o container
-                video.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                });
-            }
-            
-            const infoContainer = document.createElement('div');
-            infoContainer.className = 'gallery-item-info';
-            infoContainer.innerHTML = `
-                <h3>${item.name.length > 20 ? item.name.substring(0, 20) + '...' : item.name}</h3>
-                <p>${formatFileSize(item.size)} • ${formatDate(item.date)}</p>
-            `;
-            
-            galleryItem.appendChild(mediaContainer);
-            galleryItem.appendChild(infoContainer);
-            
-            // Adicionar evento de clique para abrir o modal no item inteiro
-            galleryItem.addEventListener('click', () => openMediaModal(item));
-            
-            galleryContainer.appendChild(galleryItem);
-        });
+        // Aplicar filtro por tipo
+        if (currentFilter !== 'all') {
+            filteredFiles = filteredFiles.filter(file => file.type === currentFilter);
+        }
         
-        if (filteredItems.length === 0) {
-            galleryContainer.innerHTML = `
-                <div class="empty-gallery">
-                    <p>Nenhuma mídia encontrada.</p>
+        // Aplicar pesquisa
+        if (searchTerm) {
+            filteredFiles = filteredFiles.filter(file => 
+                file.name.toLowerCase().includes(searchTerm)
+            );
+        }
+        
+        // Paginação
+        const totalPages = Math.ceil(filteredFiles.length / itemsPerPage);
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const filesToShow = filteredFiles.slice(startIndex, endIndex);
+        
+        // Renderizar arquivos
+        if (filesToShow.length === 0) {
+            filesContainer.innerHTML = `
+                <div class="empty-files">
+                    <i class="fas fa-folder-open"></i>
+                    <p>Nenhum arquivo encontrado.</p>
                 </div>
             `;
-        }
-    }
-
-    function filterGallery(filter) {
-        renderGallery(filter);
-    }
-
-    function openMediaModal(item) {
-        // Limpar conteúdo anterior
-        modalMediaContainer.innerHTML = '';
-        
-        // Adicionar mídia ao modal
-        if (item.type === 'image') {
-            const img = document.createElement('img');
-            img.src = item.url;
-            img.alt = item.name;
-            modalMediaContainer.appendChild(img);
         } else {
-            const video = document.createElement('video');
-            video.src = item.url;
-            video.setAttribute('controls', 'true');
-            modalMediaContainer.appendChild(video);
+            filesToShow.forEach(file => renderFileItem(file));
         }
         
-        // Atualizar informações da mídia
-        mediaTitle.textContent = item.name;
-        mediaSize.textContent = formatFileSize(item.size);
-        mediaDate.textContent = formatDate(item.date);
-        
-        // Armazenar ID do item selecionado nos botões
-        downloadBtn.setAttribute('data-id', item.id);
-        deleteBtn.setAttribute('data-id', item.id);
-        
-        // Exibir modal
-        mediaModal.style.display = 'block';
+        // Renderizar paginação
+        renderPagination(totalPages);
     }
-
-    function downloadSelectedMedia() {
-        const mediaId = this.getAttribute('data-id');
-        const item = mediaItems.find(m => m.id === mediaId);
+    
+    function renderFileItem(file) {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.setAttribute('data-id', file.id);
         
-        if (item) {
-            // Criar um link de download
+        const previewContainer = document.createElement('div');
+        previewContainer.className = `file-item-preview ${file.type}`;
+        
+        if (file.type === 'image') {
+            const img = document.createElement('img');
+            img.src = file.url;
+            img.alt = file.name;
+            previewContainer.appendChild(img);
+        } else if (file.type === 'video') {
+            const video = document.createElement('video');
+            video.src = file.url;
+            video.setAttribute('controls', 'true');
+            video.setAttribute('muted', 'true');
+            video.setAttribute('playsinline', 'true');
+            
+            // Mostrar primeiro frame
+            video.addEventListener('loadeddata', () => {
+                video.currentTime = 1;
+            });
+            
+            // Evitar propagação do clique
+            video.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+            
+            previewContainer.appendChild(video);
+        } else if (file.type === 'pdf') {
+            // Ícone e nome para PDFs
+            previewContainer.innerHTML = `
+                <i class="fas fa-file-pdf"></i>
+                <span>${file.name.length > 20 ? file.name.substring(0, 20) + '...' : file.name}</span>
+            `;
+        }
+        
+        const infoContainer = document.createElement('div');
+        infoContainer.className = 'file-item-info';
+        infoContainer.innerHTML = `
+            <h3>${file.name.length > 20 ? file.name.substring(0, 20) + '...' : file.name}</h3>
+            <p>${formatFileSize(file.size)} • ${formatDate(file.dateUploaded)}</p>
+        `;
+        
+        fileItem.appendChild(previewContainer);
+        fileItem.appendChild(infoContainer);
+        
+        // Adicionar evento de clique para abrir o modal
+        fileItem.addEventListener('click', () => openFileModal(file));
+        
+        filesContainer.appendChild(fileItem);
+    }
+    
+    function renderPagination(totalPages) {
+        paginationContainer.innerHTML = '';
+        
+        if (totalPages <= 1) return;
+        
+        // Botão anterior
+        if (currentPage > 1) {
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'page-btn prev-btn';
+            prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevBtn.addEventListener('click', () => {
+                currentPage--;
+                renderFiles();
+            });
+            paginationContainer.appendChild(prevBtn);
+        }
+        
+        // Páginas
+        const maxPagesToShow = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+        
+        if (endPage - startPage + 1 < maxPagesToShow) {
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const pageBtn = document.createElement('button');
+            pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+            pageBtn.textContent = i;
+            
+            pageBtn.addEventListener('click', () => {
+                currentPage = i;
+                renderFiles();
+            });
+            
+            paginationContainer.appendChild(pageBtn);
+        }
+        
+        // Botão próximo
+        if (currentPage < totalPages) {
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'page-btn next-btn';
+            nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            nextBtn.addEventListener('click', () => {
+                currentPage++;
+                renderFiles();
+            });
+            paginationContainer.appendChild(nextBtn);
+        }
+    }
+    
+    function openFileModal(file) {
+        // Limpar container
+        modalFileContainer.innerHTML = '';
+        
+        // Criar elemento baseado no tipo de arquivo
+        if (file.type === 'image') {
+            const img = document.createElement('img');
+            img.src = file.url;
+            img.alt = file.name;
+            modalFileContainer.appendChild(img);
+        } else if (file.type === 'video') {
+            const video = document.createElement('video');
+            video.src = file.url;
+            video.setAttribute('controls', 'true');
+            modalFileContainer.appendChild(video);
+        } else if (file.type === 'pdf') {
+            // Usar iframe para PDFs
+            const iframe = document.createElement('iframe');
+            iframe.src = file.url;
+            iframe.style.width = '100%';
+            iframe.style.height = '70vh';
+            iframe.style.border = 'none';
+            modalFileContainer.appendChild(iframe);
+        }
+        
+        // Atualizar informações
+        fileTitle.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        fileDate.textContent = formatDate(file.dateUploaded);
+        
+        // Configurar botões com ID do arquivo
+        downloadBtn.setAttribute('data-id', file.id);
+        deleteBtn.setAttribute('data-id', file.id);
+        
+        // Mostrar modal
+        fileModal.style.display = 'block';
+    }
+    
+    function downloadSelectedFile() {
+        const fileId = this.getAttribute('data-id');
+        const file = userFiles.find(f => f.id === fileId);
+        
+        if (file) {
             const a = document.createElement('a');
-            a.href = item.url;
-            a.download = item.name;
+            a.href = file.url;
+            a.download = file.name;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
         }
     }
-
-    function deleteSelectedMedia() {
-        const mediaId = this.getAttribute('data-id');
+    
+    function deleteSelectedFile() {
+        const fileId = this.getAttribute('data-id');
         
-        // Remover o item do array
-        mediaItems = mediaItems.filter(item => item.id !== mediaId);
+        // Remover arquivo da lista
+        userFiles = userFiles.filter(file => file.id !== fileId);
         
-        // Salvar alterações
-        saveMediaToStorage();
+        // Salvar mudanças
+        saveUserFiles();
         
         // Atualizar interface
-        renderGallery(document.querySelector('.filter-btn.active').getAttribute('data-filter'));
+        fileModal.style.display = 'none';
+        renderFiles();
         updateStorageStats();
         
-        // Fechar modal
-        mediaModal.style.display = 'none';
-        
-        // Mostrar notificação
-        showNotification('Arquivo excluído com sucesso!', 'success');
+        showNotification('Arquivo excluído com sucesso.', 'success');
     }
-
+    
     function updateStorageStats() {
-        const totalUsedBytes = calculateTotalStorageUsed();
-        const totalUsedGB = (totalUsedBytes / (1024 * 1024 * 1024)).toFixed(2);
-        const availableGB = (MAX_STORAGE_GB - totalUsedGB).toFixed(2);
+        // Calcular espaço usado
+        totalStorageUsed = userFiles.reduce((sum, file) => sum + file.size, 0);
         
-        // Porcentagem de uso
-        const usagePercentage = (totalUsedGB / MAX_STORAGE_GB) * 100;
+        // Converter para GB
+        const usedGB = (totalStorageUsed / (1024 * 1024 * 1024)).toFixed(2);
+        const availableGB = (MAX_STORAGE_GB - usedGB).toFixed(2);
+        const usagePercentage = (usedGB / MAX_STORAGE_GB) * 100;
         
-        // Atualizar barra de progresso
+        // Atualizar elementos na interface
         storageBar.style.width = `${usagePercentage}%`;
-        
-        // Atualizar textos
-        usedStorageElem.textContent = `${totalUsedGB} GB`;
+        usedStorageElem.textContent = `${usedGB} GB`;
         availableStorageElem.textContent = `${availableGB} GB`;
-        storageUsedHeader.textContent = `${totalUsedGB} GB`;
+        storageUsedHeader.textContent = `${usedGB} GB`;
         
-        // Estatísticas de arquivos
-        const totalFiles = mediaItems.length;
-        const totalImages = mediaItems.filter(item => item.type === 'image').length;
-        const totalVideos = mediaItems.filter(item => item.type === 'video').length;
+        // Contagens por tipo
+        const totalFiles = userFiles.length;
+        const totalImages = userFiles.filter(file => file.type === 'image').length;
+        const totalVideos = userFiles.filter(file => file.type === 'video').length;
+        const totalPdfs = userFiles.filter(file => file.type === 'pdf').length;
         
         // Tamanho médio
-        const avgSizeBytes = totalFiles > 0 ? totalUsedBytes / totalFiles : 0;
+        const avgSize = totalFiles > 0 ? totalStorageUsed / totalFiles : 0;
         
+        // Atualizar elementos de estatísticas
         totalFilesElem.textContent = totalFiles;
         totalImagesElem.textContent = totalImages;
         totalVideosElem.textContent = totalVideos;
-        avgSizeElem.textContent = formatFileSize(avgSizeBytes);
+        totalPdfsElem.textContent = totalPdfs;
+        avgSizeElem.textContent = formatFileSize(avgSize);
     }
-
-    function calculateTotalStorageUsed() {
-        return mediaItems.reduce((total, item) => total + item.size, 0);
-    }
-
-    // Funções utilitárias
+    
+    // Utilidades
     function formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
         
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(1024));
         
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
     }
-
+    
     function formatDate(dateString) {
         const date = new Date(dateString);
         return date.toLocaleDateString('pt-BR');
     }
-
+    
     function showNotification(message, type = 'info') {
-        // Criar elemento de notificação
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
         notification.textContent = message;
         
-        // Adicionar ao DOM
         document.body.appendChild(notification);
         
-        // Mostrar com fade-in
         setTimeout(() => {
             notification.classList.add('show');
         }, 10);
         
-        // Remover após alguns segundos
         setTimeout(() => {
             notification.classList.remove('show');
             setTimeout(() => {
@@ -569,41 +677,4 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 300);
         }, 3000);
     }
-    
-    // Adicionar CSS para notificações
-    const notificationStyles = document.createElement('style');
-    notificationStyles.textContent = `
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            border-radius: 5px;
-            color: white;
-            opacity: 0;
-            transform: translateY(-20px);
-            transition: all 0.3s;
-            z-index: 5000;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-        
-        .notification.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        
-        .notification.success {
-            background-color: var(--success-color);
-        }
-        
-        .notification.error {
-            background-color: var(--danger-color);
-        }
-        
-        .notification.info {
-            background-color: var(--primary-color);
-        }
-    `;
-    
-    document.head.appendChild(notificationStyles);
-}); 
+});
