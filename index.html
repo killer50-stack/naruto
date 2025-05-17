@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediaVault - Armazenamento de Fotos e Vídeos</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>MediaVault</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#" class="active">Início</a></li>
+                <li><a href="#upload">Upload</a></li>
+                <li><a href="#galeria">Galeria</a></li>
+                <li><a href="#stats">Estatísticas</a></li>
+            </ul>
+        </nav>
+        <div class="user-info">
+            <span id="storage-used">0 GB</span> / <span>900 GB</span>
+            <button id="login-btn">Entrar</button>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Armazene seus momentos especiais</h1>
+                <p>Upload de fotos e vídeos com até 3GB cada. Capacidade total de 900GB.</p>
+                <button id="upload-btn" class="btn-primary">Fazer Upload</button>
+            </div>
+        </section>
+
+        <section id="upload" class="upload-section">
+            <h2>Enviar Arquivos</h2>
+            <div class="upload-container">
+                <div id="drop-area">
+                    <p>Arraste arquivos aqui ou <label for="file-input">clique para selecionar</label></p>
+                    <input type="file" id="file-input" multiple accept="image/*,video/*">
+                    <div id="upload-preview"></div>
+                </div>
+                <div class="file-list">
+                    <h3>Arquivos selecionados</h3>
+                    <ul id="file-list"></ul>
+                    <div class="upload-controls">
+                        <span id="total-size">0 MB</span>
+                        <button id="start-upload" class="btn-primary" disabled>Iniciar Upload</button>
+                    </div>
+                </div>
+            </div>
+            <div id="progress-container" class="hidden">
+                <h3>Progresso do Upload</h3>
+                <div class="progress-bar-container">
+                    <div id="progress-bar"></div>
+                </div>
+                <span id="progress-text">0%</span>
+            </div>
+        </section>
+
+        <section id="galeria" class="gallery-section">
+            <h2>Sua Galeria</h2>
+            <div class="filter-controls">
+                <button class="filter-btn active" data-filter="all">Todos</button>
+                <button class="filter-btn" data-filter="image">Fotos</button>
+                <button class="filter-btn" data-filter="video">Vídeos</button>
+                <div class="search-box">
+                    <input type="text" placeholder="Buscar...">
+                    <button><i class="fas fa-search"></i></button>
+                </div>
+            </div>
+            <div id="gallery-container"></div>
+            <div id="pagination"></div>
+        </section>
+
+        <section id="stats" class="stats-section">
+            <h2>Estatísticas de Armazenamento</h2>
+            <div class="stats-container">
+                <div class="stat-card">
+                    <h3>Armazenamento</h3>
+                    <div class="storage-chart">
+                        <div id="storage-bar"></div>
+                    </div>
+                    <div class="stat-details">
+                        <p>Usado: <span id="used-storage">0 GB</span></p>
+                        <p>Disponível: <span id="available-storage">900 GB</span></p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <h3>Resumo</h3>
+                    <div class="stat-details">
+                        <p>Total de arquivos: <span id="total-files">0</span></p>
+                        <p>Fotos: <span id="total-images">0</span></p>
+                        <p>Vídeos: <span id="total-videos">0</span></p>
+                        <p>Tamanho médio: <span id="avg-size">0 MB</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="media-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div id="modal-media-container"></div>
+            <div class="media-info">
+                <h3 id="media-title"></h3>
+                <p>Tamanho: <span id="media-size"></span></p>
+                <p>Data: <span id="media-date"></span></p>
+                <div class="media-actions">
+                    <button id="download-btn"><i class="fas fa-download"></i> Baixar</button>
+                    <button id="delete-btn"><i class="fas fa-trash"></i> Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2023 MediaVault. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html> 
