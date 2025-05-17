@@ -3,34 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediaVault - Armazenamento de Fotos e Vídeos</title>
+    <title>BrownBox - Armazenamento de Arquivos</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <header>
         <div class="logo">
-            <h1>MediaVault</h1>
+            <i class="fas fa-box-archive"></i>
+            <h1>BrownBox</h1>
         </div>
         <nav>
             <ul>
-                <li><a href="#" class="active">Início</a></li>
+                <li><a href="#" class="active">Meus Arquivos</a></li>
                 <li><a href="#upload">Upload</a></li>
-                <li><a href="#galeria">Galeria</a></li>
-                <li><a href="#stats">Estatísticas</a></li>
+                <li><a href="#estatisticas">Estatísticas</a></li>
             </ul>
         </nav>
         <div class="user-info">
-            <span id="storage-used">0 GB</span> / <span>900 GB</span>
-            <button id="login-btn">Entrar</button>
+            <span id="storage-used">0 GB</span> / <span>999 GB</span>
+            <button id="login-btn">Usuário</button>
         </div>
     </header>
 
     <main>
         <section class="hero">
             <div class="hero-content">
-                <h1>Armazene seus momentos especiais</h1>
-                <p>Upload de fotos e vídeos com até 3GB cada. Capacidade total de 900GB.</p>
+                <h1>Armazene seus arquivos com segurança</h1>
+                <p>Upload de arquivos com até 29GB cada. Capacidade total de 999GB.</p>
                 <button id="upload-btn" class="btn-primary">Fazer Upload</button>
             </div>
         </section>
@@ -40,7 +40,7 @@
             <div class="upload-container">
                 <div id="drop-area">
                     <p>Arraste arquivos aqui ou <label for="file-input">clique para selecionar</label></p>
-                    <input type="file" id="file-input" multiple accept="image/*,video/*">
+                    <input type="file" id="file-input" multiple accept="image/*,video/*,application/pdf">
                     <div id="upload-preview"></div>
                 </div>
                 <div class="file-list">
@@ -61,22 +61,23 @@
             </div>
         </section>
 
-        <section id="galeria" class="gallery-section">
-            <h2>Sua Galeria</h2>
+        <section id="files" class="files-section">
+            <h2>Meus Arquivos</h2>
             <div class="filter-controls">
                 <button class="filter-btn active" data-filter="all">Todos</button>
-                <button class="filter-btn" data-filter="image">Fotos</button>
+                <button class="filter-btn" data-filter="image">Imagens</button>
                 <button class="filter-btn" data-filter="video">Vídeos</button>
+                <button class="filter-btn" data-filter="pdf">PDFs</button>
                 <div class="search-box">
-                    <input type="text" placeholder="Buscar...">
-                    <button><i class="fas fa-search"></i></button>
+                    <input type="text" id="search-input" placeholder="Buscar...">
+                    <button id="search-btn"><i class="fas fa-search"></i></button>
                 </div>
             </div>
-            <div id="gallery-container"></div>
+            <div id="files-container"></div>
             <div id="pagination"></div>
         </section>
 
-        <section id="stats" class="stats-section">
+        <section id="estatisticas" class="stats-section">
             <h2>Estatísticas de Armazenamento</h2>
             <div class="stats-container">
                 <div class="stat-card">
@@ -86,15 +87,16 @@
                     </div>
                     <div class="stat-details">
                         <p>Usado: <span id="used-storage">0 GB</span></p>
-                        <p>Disponível: <span id="available-storage">900 GB</span></p>
+                        <p>Disponível: <span id="available-storage">999 GB</span></p>
                     </div>
                 </div>
                 <div class="stat-card">
                     <h3>Resumo</h3>
                     <div class="stat-details">
                         <p>Total de arquivos: <span id="total-files">0</span></p>
-                        <p>Fotos: <span id="total-images">0</span></p>
+                        <p>Imagens: <span id="total-images">0</span></p>
                         <p>Vídeos: <span id="total-videos">0</span></p>
+                        <p>PDFs: <span id="total-pdfs">0</span></p>
                         <p>Tamanho médio: <span id="avg-size">0 MB</span></p>
                     </div>
                 </div>
@@ -102,15 +104,15 @@
         </section>
     </main>
 
-    <div id="media-modal" class="modal">
+    <div id="file-modal" class="modal">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
-            <div id="modal-media-container"></div>
-            <div class="media-info">
-                <h3 id="media-title"></h3>
-                <p>Tamanho: <span id="media-size"></span></p>
-                <p>Data: <span id="media-date"></span></p>
-                <div class="media-actions">
+            <div id="modal-file-container"></div>
+            <div class="file-info">
+                <h3 id="file-title"></h3>
+                <p>Tamanho: <span id="file-size"></span></p>
+                <p>Data: <span id="file-date"></span></p>
+                <div class="file-actions">
                     <button id="download-btn"><i class="fas fa-download"></i> Baixar</button>
                     <button id="delete-btn"><i class="fas fa-trash"></i> Excluir</button>
                 </div>
@@ -120,7 +122,7 @@
 
     <footer>
         <div class="footer-content">
-            <p>&copy; 2024 MediaVault. Todos os direitos reservados.</p>
+            <p>&copy; 2024 BrownBox. Todos os direitos reservados.</p>
         </div>
     </footer>
 

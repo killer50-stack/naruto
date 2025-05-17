@@ -173,6 +173,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (file.type.startsWith('video/')) {
                 const video = document.createElement('video');
                 video.src = e.target.result;
+                video.setAttribute('controls', 'true');
                 video.setAttribute('muted', 'true');
                 video.setAttribute('playsinline', 'true');
                 previewItem.appendChild(video);
@@ -378,9 +379,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 img.src = item.url;
                 img.alt = item.name;
                 mediaContainer.appendChild(img);
+                
+                // Adicionar evento de clique para abrir o modal apenas nas imagens
+                img.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openMediaModal(item);
+                });
             } else {
                 const video = document.createElement('video');
                 video.src = item.url;
+                video.setAttribute('controls', 'true');
                 video.setAttribute('muted', 'true');
                 video.setAttribute('playsinline', 'true');
                 // Mostrar o primeiro frame
@@ -388,6 +396,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     video.currentTime = 1;
                 });
                 mediaContainer.appendChild(video);
+                
+                // Prevenir que o clique no vídeo propague para o container
+                video.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
             }
             
             const infoContainer = document.createElement('div');
@@ -400,7 +413,7 @@ document.addEventListener('DOMContentLoaded', function() {
             galleryItem.appendChild(mediaContainer);
             galleryItem.appendChild(infoContainer);
             
-            // Adicionar evento de clique para abrir o modal
+            // Adicionar evento de clique para abrir o modal no item inteiro
             galleryItem.addEventListener('click', () => openMediaModal(item));
             
             galleryContainer.appendChild(galleryItem);
