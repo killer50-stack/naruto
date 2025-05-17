@@ -7,17 +7,17 @@
 }
 
 :root {
-    --primary-color: #4a6bff;
-    --secondary-color: #333;
+    --primary-color: #00b300;
+    --secondary-color: #000;
     --light-color: #f5f5f5;
-    --border-color: #ddd;
+    --border-color: #1a1a1a;
     --success-color: #28a745;
     --danger-color: #dc3545;
 }
 
 body {
-    background-color: #f8f9fa;
-    color: #333;
+    background-color: #111;
+    color: #f5f5f5;
     line-height: 1.6;
 }
 
@@ -58,8 +58,8 @@ section {
 
 /* Header */
 header {
-    background-color: white;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    background-color: #000;
+    box-shadow: 0 2px 10px rgba(0, 204, 0, 0.2);
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -129,13 +129,14 @@ nav ul li a.active::after {
 
 /* Hero Section */
 .hero {
-    background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1558174685-430919a96c8d') no-repeat center center/cover;
+    background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1558174685-430919a96c8d') no-repeat center center/cover;
     height: 500px;
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
+    border-bottom: 2px solid var(--primary-color);
 }
 
 .hero-content {
@@ -156,7 +157,7 @@ nav ul li a.active::after {
 
 /* Upload Section */
 .upload-section {
-    background-color: white;
+    background-color: #111;
     text-align: center;
 }
 
@@ -171,7 +172,7 @@ nav ul li a.active::after {
 #drop-area {
     flex: 1;
     min-width: 300px;
-    border: 3px dashed var(--border-color);
+    border: 3px dashed #333;
     border-radius: 10px;
     padding: 30px;
     text-align: center;
@@ -181,7 +182,7 @@ nav ul li a.active::after {
 
 #drop-area.highlight {
     border-color: var(--primary-color);
-    background-color: rgba(74, 107, 255, 0.05);
+    background-color: rgba(0, 179, 0, 0.1);
 }
 
 #drop-area p {
@@ -207,10 +208,11 @@ nav ul li a.active::after {
     list-style: none;
     max-height: 300px;
     overflow-y: auto;
-    border: 1px solid var(--border-color);
+    border: 1px solid #333;
     border-radius: 5px;
     padding: 10px;
     margin-bottom: 15px;
+    background-color: #1a1a1a;
 }
 
 #file-list li {
@@ -218,7 +220,7 @@ nav ul li a.active::after {
     justify-content: space-between;
     align-items: center;
     padding: 10px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid #333;
 }
 
 #file-list li:last-child {
@@ -242,7 +244,7 @@ nav ul li a.active::after {
 
 .file-details p {
     font-size: 14px;
-    color: #666;
+    color: #aaa;
 }
 
 .remove-file {
@@ -302,7 +304,7 @@ nav ul li a.active::after {
 
 /* Gallery Section */
 .gallery-section {
-    background-color: var(--light-color);
+    background-color: #0a0a0a;
 }
 
 .filter-controls {
@@ -314,12 +316,13 @@ nav ul li a.active::after {
 }
 
 .filter-btn {
-    background-color: white;
-    border: 1px solid var(--border-color);
+    background-color: #222;
+    border: 1px solid #333;
     padding: 8px 20px;
     border-radius: 30px;
     cursor: pointer;
     transition: all 0.3s;
+    color: #fff;
 }
 
 .filter-btn.active, .filter-btn:hover {
@@ -335,9 +338,11 @@ nav ul li a.active::after {
 
 .search-box input {
     padding: 8px 15px;
-    border: 1px solid var(--border-color);
+    border: 1px solid #333;
     border-radius: 30px 0 0 30px;
     outline: none;
+    background-color: #222;
+    color: white;
 }
 
 .search-box button {
@@ -357,10 +362,10 @@ nav ul li a.active::after {
 }
 
 .gallery-item {
-    background-color: white;
+    background-color: #1a1a1a;
     border-radius: 10px;
     overflow: hidden;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 3px 10px rgba(0, 204, 0, 0.1);
     transition: transform 0.3s;
     cursor: pointer;
 }
@@ -390,7 +395,7 @@ nav ul li a.active::after {
 }
 
 .gallery-item-info p {
-    color: #666;
+    color: #aaa;
     font-size: 14px;
 }
 
@@ -406,9 +411,10 @@ nav ul li a.active::after {
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid var(--border-color);
+    border: 1px solid #333;
     border-radius: 5px;
-    background-color: white;
+    background-color: #222;
+    color: white;
     cursor: pointer;
     transition: all 0.3s;
 }
@@ -421,7 +427,7 @@ nav ul li a.active::after {
 
 /* Stats Section */
 .stats-section {
-    background-color: white;
+    background-color: #111;
 }
 
 .stats-container {
@@ -432,17 +438,18 @@ nav ul li a.active::after {
 }
 
 .stat-card {
-    background-color: var(--light-color);
+    background-color: #1a1a1a;
     border-radius: 10px;
     padding: 20px;
     flex: 1;
     min-width: 300px;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 3px 10px rgba(0, 204, 0, 0.1);
+    border: 1px solid #333;
 }
 
 .storage-chart {
     height: 20px;
-    background-color: #e9ecef;
+    background-color: #333;
     border-radius: 10px;
     overflow: hidden;
     margin: 20px 0;
@@ -450,7 +457,7 @@ nav ul li a.active::after {
 
 #storage-bar {
     height: 100%;
-    background: linear-gradient(to right, #4a6bff, #2d44b3);
+    background: linear-gradient(to right, #00b300, #008000);
     width: 0%;
     transition: width 1s;
 }
@@ -469,19 +476,20 @@ nav ul li a.active::after {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(0, 0, 0, 0.9);
     z-index: 2000;
     overflow: auto;
 }
 
 .modal-content {
     position: relative;
-    background-color: white;
+    background-color: #1a1a1a;
     margin: 50px auto;
     padding: 30px;
     border-radius: 10px;
     max-width: 900px;
     width: 90%;
+    border: 1px solid #333;
 }
 
 .close-modal {
@@ -505,7 +513,7 @@ nav ul li a.active::after {
 
 .media-info {
     padding-top: 20px;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid #333;
 }
 
 .media-actions {
@@ -542,10 +550,11 @@ nav ul li a.active::after {
 
 /* Footer */
 footer {
-    background-color: var(--secondary-color);
+    background-color: #000;
     color: white;
     text-align: center;
     padding: 20px 0;
+    border-top: 1px solid #333;
 }
 
 /* Responsive */
